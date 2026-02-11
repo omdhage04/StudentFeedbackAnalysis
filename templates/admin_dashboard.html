@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Console | AIfeedBacker</title>
+    
+    <!-- Tailwind & Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Inter Tight"', 'sans-serif'] },
+                    colors: {
+                        obsidian: "#000000",
+                        charcoal: "#0a0a0a",
+                        borderSubtle: "rgba(255, 255, 255, 0.08)",
+                        primary: "#6366f1",
+                        accent: "#a855f7",
+                        glow: "#d946ef",
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #000000; color: #ffffff; }
+        
+        .grid-bg {
+            background-size: 60px 60px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
+            position: fixed; inset: 0; pointer-events: none; z-index: 0;
+        }
+
+        .glass-card {
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover { border-color: rgba(168, 85, 247, 0.4); }
+
+        .text-premium {
+            background: linear-gradient(to right, #fff 20%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-box {
+            position: relative; width: 32px; height: 32px; background: #000;
+            border: 1px solid rgba(255,255,255,0.2); transform: rotate(45deg);
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        .logo-box::before {
+            content: ''; position: absolute; width: 200%; height: 200%;
+            background: conic-gradient(transparent, #a855f7, transparent);
+            animation: spin 4s linear infinite;
+        }
+        .logo-inner { width: 26px; height: 26px; background: #000; position: relative; z-index: 10; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="grid-bg"></div>
+
+    <!-- NAVBAR -->
+    <nav class="fixed w-full z-50 top-0 border-b border-white/5 bg-black/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="logo-box"><div class="logo-inner"></div></div>
+                <span class="text-xl font-bold tracking-tight text-white italic">Admin<span class="text-accent">Console</span></span>
+            </div>
+            <a href="/logout" class="text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-red-500 transition-colors">
+                Terminate Session <i class="fas fa-power-off ml-2"></i>
+            </a>
+        </div>
+    </nav>
+
+    <main class="relative z-10 pt-32 pb-20 px-6 max-w-7xl mx-auto">
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="mb-8 p-4 rounded-xl text-xs font-bold uppercase tracking-widest text-center border
+                {% if category == 'success' %} border-green-500/30 bg-green-500/10 text-green-400 
+                {% else %} border-red-500/30 bg-red-500/10 text-red-400 {% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- 1. SYSTEM STATS (Clickable to switch view) -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16">
+            <button onclick="scrollToSection('pending-section')" class="glass-card p-6 text-left group">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20"><i class="fas fa-bolt"></i></div>
+                    <i class="fas fa-arrow-right text-gray-700 group-hover:text-white transition-colors"></i>
+                </div>
+                <h3 class="text-3xl font-bold mb-1">{{ stats.total_users }}</h3>
+                <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500">Total Network Nodes</p>
+            </button>
+
+            <button onclick="scrollToSection('student-section')" class="glass-card p-6 text-left group">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500 border border-green-500/20"><i class="fas fa-user-graduate"></i></div>
+                    <i class="fas fa-arrow-right text-gray-700 group-hover:text-white transition-colors"></i>
+                </div>
+                <h3 class="text-3xl font-bold mb-1">{{ stats.students }}</h3>
+                <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500">Active Students</p>
+            </button>
+
+            <button onclick="scrollToSection('teacher-section')" class="glass-card p-6 text-left group">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center text-accent border border-accent/20"><i class="fas fa-chalkboard-teacher"></i></div>
+                    <i class="fas fa-arrow-right text-gray-700 group-hover:text-white transition-colors"></i>
+                </div>
+                <h3 class="text-3xl font-bold mb-1">{{ stats.teachers }}</h3>
+                <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500">Faculty Officers</p>
+            </button>
+
+            <button onclick="scrollToSection('feedback-section')" class="glass-card p-6 text-left group">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-10 h-10 rounded-lg bg-glow/10 flex items-center justify-center text-glow border border-glow/20"><i class="fas fa-comment-dots"></i></div>
+                    <i class="fas fa-arrow-right text-gray-700 group-hover:text-white transition-colors"></i>
+                </div>
+                <h3 class="text-3xl font-bold mb-1">{{ stats.responses }}</h3>
+                <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500">Processed Signals</p>
+            </button>
+        </div>
+
+        <!-- 2. PENDING APPROVALS -->
+        <section id="pending-section" class="mb-20">
+            <div class="flex justify-between items-end mb-8">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight">Pending Authorizations</h2>
+                    <p class="text-gray-500 text-xs uppercase tracking-widest mt-1">Verification queue for new network entries</p>
+                </div>
+            </div>
+            
+            <div class="glass-card overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-white/[0.02] border-b border-white/5">
+                        <tr class="text-[10px] uppercase tracking-widest text-gray-500">
+                            <th class="px-8 py-4">Identity</th>
+                            <th class="px-8 py-4">Role</th>
+                            <th class="px-8 py-4 text-right">Protocol</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for user in pending_users %}
+                        <tr class="hover:bg-white/[0.01] transition-colors">
+                            <td class="px-8 py-5">
+                                <div class="font-bold text-sm text-white">{{ user.name }}</div>
+                                <div class="text-[10px] text-gray-500 font-mono">{{ user.email }}</div>
+                            </td>
+                            <td class="px-8 py-5">
+                                <span class="text-[9px] font-bold px-2 py-1 rounded bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 uppercase">{{ user.role }}</span>
+                            </td>
+                            <td class="px-8 py-5 text-right">
+                                <form action="/admin/approve_user" method="POST" class="inline-flex gap-2">
+                                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                                    <button name="action" value="approve" class="w-8 h-8 rounded-full border border-green-500/30 text-green-500 hover:bg-green-500 hover:text-white transition-all"><i class="fas fa-check text-xs"></i></button>
+                                    <button name="action" value="reject" class="w-8 h-8 rounded-full border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white transition-all"><i class="fas fa-times text-xs"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="px-8 py-10 text-center text-gray-600 text-xs uppercase tracking-widest italic">All nodes verified. Queue empty.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
+            <!-- 3. TEACHER MANAGEMENT -->
+            <section id="teacher-section">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold tracking-tight">Faculty Management</h2>
+                    <button onclick="openModal()" class="text-[10px] bg-white text-black px-4 py-2 rounded-full font-bold uppercase hover:bg-accent hover:text-white transition-all">+ Add Teacher</button>
+                </div>
+                <div class="glass-card overflow-hidden custom-scroll max-h-[500px] overflow-y-auto">
+                    <table class="w-full text-left">
+                        <tbody class="divide-y divide-white/5">
+                            {% for teacher in all_teachers %}
+                            <tr class="hover:bg-white/[0.02]">
+                                <td class="px-6 py-4">
+                                    <div class="font-bold text-sm">{{ teacher.name }}</div>
+                                    <div class="text-[10px] text-gray-500 uppercase">{{ teacher.department }}</div>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <form action="/admin/delete_teacher" method="POST" onsubmit="return confirm('Purge teacher node from network?');">
+                                        <input type="hidden" name="user_id" value="{{ teacher.user_id }}">
+                                        <button type="submit" class="text-gray-600 hover:text-red-500 transition-colors"><i class="fas fa-trash-alt"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 4. STUDENT MANAGEMENT (NEW) -->
+            <section id="student-section">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold tracking-tight">Student Directory</h2>
+                </div>
+                <div class="glass-card overflow-hidden custom-scroll max-h-[500px] overflow-y-auto">
+                    <table class="w-full text-left">
+                        <tbody class="divide-y divide-white/5">
+                            <!-- Ensure app.py passes 'all_students' -->
+                            {% for student in all_students %}
+                            <tr class="hover:bg-white/[0.02]">
+                                <td class="px-6 py-4">
+                                    <div class="font-bold text-sm">{{ student.name }}</div>
+                                    <div class="text-[10px] text-gray-500 font-mono">{{ student.email }}</div>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <form action="/admin/delete_user" method="POST" onsubmit="return confirm('Purge student node from network?');">
+                                        <input type="hidden" name="user_id" value="{{ student.id }}">
+                                        <button type="submit" class="text-gray-600 hover:text-red-500 transition-colors"><i class="fas fa-user-minus"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td class="px-6 py-10 text-center text-gray-600 text-xs italic">No students registered in this college.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- 5. FEEDBACK MONITORING -->
+        <section id="feedback-section">
+            <h2 class="text-2xl font-bold tracking-tight mb-8">Intelligence Streams</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {% for form in all_forms %}
+                <div class="glass-card p-6 border-t-2 border-accent/30 relative group">
+                    <div class="absolute top-4 right-6 text-[9px] font-mono text-gray-600">{{ form[2] }}</div>
+                    <h4 class="text-lg font-bold mb-4 pr-10 line-clamp-1 italic">{{ form[1] }}</h4>
+                    <div class="flex items-center gap-4 mb-6">
+                        <div>
+                            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Signals</p>
+                            <p class="text-xl font-bold">{{ form[3] }}</p>
+                        </div>
+                        <div class="h-8 w-px bg-white/5"></div>
+                        <div>
+                            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Origin</p>
+                            <p class="text-xs font-bold text-premium uppercase">{{ form[4] }}</p>
+                        </div>
+                    </div>
+                    <a href="/analytics/{{ form[0] }}" class="block w-full py-3 rounded-lg bg-white/5 border border-white/10 text-center text-[10px] font-bold uppercase tracking-widest group-hover:bg-accent group-hover:text-white transition-all">Open Report Core</a>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ADD TEACHER MODAL -->
+    <div id="addTeacherModal" class="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md hidden items-center justify-center p-6">
+        <div class="glass-card w-full max-w-md p-8 relative">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-gray-500 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            <h2 class="text-2xl font-bold mb-2">Deploy Faculty Account</h2>
+            <p class="text-gray-500 text-xs uppercase tracking-widest mb-8">Initialize new instructor identity</p>
+            
+            <form action="/admin/add_teacher" method="POST" class="space-y-6">
+                <div>
+                    <label class="text-[10px] uppercase tracking-widest text-gray-500 block mb-1">Full Name</label>
+                    <input type="text" name="name" required placeholder="Dr. John Doe" class="w-full bg-black border-b border-white/20 py-3 focus:outline-none focus:border-accent text-sm transition-colors">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase tracking-widest text-gray-500 block mb-1">Institutional Email</label>
+                    <input type="email" name="email" required placeholder="instructor@college.edu" class="w-full bg-black border-b border-white/20 py-3 focus:outline-none focus:border-accent text-sm transition-colors">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase tracking-widest text-gray-500 block mb-1">Department</label>
+                    <input type="text" name="department" required placeholder="Computer Science" class="w-full bg-black border-b border-white/20 py-3 focus:outline-none focus:border-accent text-sm transition-colors">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase tracking-widest text-gray-500 block mb-1">Assign Secure Password</label>
+                    <input type="password" name="password" required placeholder="••••••••" class="w-full bg-black border-b border-white/20 py-3 focus:outline-none focus:border-accent text-sm transition-colors">
+                </div>
+                <button type="submit" class="w-full py-4 rounded-full bg-white text-black font-bold uppercase text-[10px] tracking-widest hover:bg-accent hover:text-white transition-all shadow-xl">Activate Identity</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById("addTeacherModal");
+
+        function openModal() { modal.style.display = "flex"; document.body.style.overflow = 'hidden'; }
+        function closeModal() { modal.style.display = "none"; document.body.style.overflow = 'auto'; }
+
+        function scrollToSection(id) {
+            const el = document.getElementById(id);
+            const yOffset = -100; 
+            const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({top: y, behavior: 'smooth'});
+            
+            // Subtle highlight effect
+            el.classList.add('opacity-50');
+            setTimeout(() => el.classList.remove('opacity-50'), 500);
+        }
+
+        window.onclick = function(e) { if (e.target == modal) closeModal(); }
+    </script>
+
+</body>
+</html>

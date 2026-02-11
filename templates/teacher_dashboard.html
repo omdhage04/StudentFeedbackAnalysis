@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Command Center | AIfeedBacker</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 
+                        sans: ['"Inter Tight"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        obsidian: "#050505",
+                        charcoal: "#0a0a0a",
+                        glass: "rgba(255, 255, 255, 0.03)",
+                        glassBorder: "rgba(255, 255, 255, 0.08)",
+                        primary: "#6366f1",  /* Indigo */
+                        accent: "#a855f7",   /* Purple */
+                        success: "#10b981",
+                        danger: "#ef4444",
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        /* Subtle Grid Background */
+        .grid-bg {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            mask-image: radial-gradient(circle at 50% 0%, black 40%, transparent 80%);
+        }
+
+        /* LOGO STYLES (Matching Index) */
+        .logo-box {
+            position: relative; width: 32px; height: 32px; background: #000;
+            border: 1px solid rgba(255,255,255,0.2); transform: rotate(45deg);
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        .logo-box::before {
+            content: ''; position: absolute; width: 200%; height: 200%;
+            background: conic-gradient(transparent, #a855f7, transparent);
+            animation: spin 4s linear infinite;
+        }
+        .logo-inner { width: 26px; height: 26px; background: #000; position: relative; z-index: 10; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Glass Card Utility */
+        .glass-card {
+            background: #0a0a0a;
+            border: 1px solid var(--glassBorder);
+            backdrop-filter: blur(12px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.1);
+        }
+
+        /* Inputs */
+        .input-dark {
+            background: #000;
+            border: 1px solid #222;
+            color: white;
+            transition: all 0.2s;
+        }
+        .input-dark:focus {
+            border-color: #6366f1;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.6s ease forwards; opacity: 0; transform: translateY(10px); }
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+        
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- Background -->
+    <div class="fixed inset-0 grid-bg pointer-events-none z-0"></div>
+    <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/10 blur-[120px] rounded-full pointer-events-none z-0"></div>
+
+    <!-- NAVBAR -->
+    <nav class="sticky top-0 z-50 border-b border-white/5 bg-black/80 backdrop-blur-xl">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <!-- UPDATED LOGO -->
+                <div class="logo-box"><div class="logo-inner"></div></div>
+                <span class="text-lg font-bold tracking-tight">Faculty<span class="text-primary">Portal</span></span>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <div class="text-right hidden md:block">
+                    <p class="text-xs font-bold text-white">{{ teacher.name }}</p>
+                    <p class="text-[10px] text-gray-500 uppercase tracking-wider">{{ teacher.designation }}</p>
+                </div>
+                <div class="h-8 w-px bg-white/10"></div>
+                <a href="{{ url_for('logout') }}" class="group flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-white transition-colors uppercase tracking-widest">
+                    Logout <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="relative z-10 max-w-7xl mx-auto px-6 py-10 w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- LEFT COLUMN: Profile & Create Topic (4 Columns) -->
+        <aside class="lg:col-span-4 space-y-6">
+            
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="fade-in p-4 rounded-xl border flex items-center gap-3 text-xs font-bold uppercase tracking-wide
+                    {% if category == 'success' %} bg-emerald-500/10 border-emerald-500/20 text-emerald-400 
+                    {% else %} bg-red-500/10 border-red-500/20 text-red-400 {% endif %}">
+                    <i class="fas {% if category == 'success' %} fa-check-circle {% else %} fa-exclamation-triangle {% endif %}"></i>
+                    {{ message }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <!-- Profile Card -->
+            <div class="glass-card rounded-2xl p-6 fade-in relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                
+                <h3 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-6">Instructor Profile</h3>
+                
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center py-2 border-b border-white/5">
+                        <span class="text-gray-400 text-sm">Department</span>
+                        <span class="text-white font-mono text-sm">{{ teacher.dept }}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-white/5">
+                        <span class="text-gray-400 text-sm">Assigned Class</span>
+                        <span class="text-accent font-mono text-sm">{{ teacher.class_info }}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2">
+                        <span class="text-gray-400 text-sm">Designation</span>
+                        <span class="text-white font-mono text-sm">{{ teacher.designation }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Topic Card -->
+            <div class="glass-card rounded-2xl p-6 fade-in delay-100">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-primary border border-white/5">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white">Create Topic</h3>
+                        <p class="text-xs text-gray-500">Launch a new feedback session</p>
+                    </div>
+                </div>
+
+                <form action="{{ url_for('create_form') }}" method="POST" class="space-y-3">
+                    <div>
+                        <input type="text" name="title" required placeholder="Topic Title (e.g. Week 4 - Python)" 
+                               class="w-full input-dark rounded-xl px-4 py-3 text-sm focus:ring-0">
+                    </div>
+                    <button type="submit" class="w-full bg-white text-black font-bold py-3 rounded-xl hover:bg-primary hover:text-white transition-all text-xs uppercase tracking-widest">
+                        Deploy Form
+                    </button>
+                </form>
+            </div>
+
+        </aside>
+
+        <!-- RIGHT COLUMN: Students & Forms (8 Columns) -->
+        <section class="lg:col-span-8 space-y-8">
+
+            <!-- 1. PENDING APPROVALS -->
+            <div class="glass-card rounded-2xl fade-in delay-200 overflow-hidden">
+                <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                    <h3 class="font-bold text-white text-sm uppercase tracking-widest flex items-center gap-2">
+                        <i class="fas fa-user-clock text-gray-500"></i> New Registrations
+                    </h3>
+                    {% if pending_students %}
+                    <span class="px-2 py-1 rounded bg-yellow-500/10 text-yellow-500 text-[10px] font-bold border border-yellow-500/20">
+                        {{ pending_students|length }} Pending
+                    </span>
+                    {% endif %}
+                </div>
+
+                {% if pending_students %}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-black/40 text-[10px] uppercase text-gray-500 font-bold tracking-wider">
+                            <tr>
+                                <th class="px-6 py-4">Student Name</th>
+                                <th class="px-6 py-4">PRN Number</th>
+                                <th class="px-6 py-4 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5">
+                            {% for student in pending_students %}
+                            <tr class="group hover:bg-white/[0.02] transition-colors">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-gray-800 to-gray-700 flex items-center justify-center text-xs font-bold">
+                                            {{ student[1][:1] }}
+                                        </div>
+                                        <span class="text-sm font-medium text-white">{{ student[1] }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-400 font-mono">{{ student[2] }}</td>
+                                <td class="px-6 py-4 text-right">
+                                    <form action="{{ url_for('approve_student') }}" method="POST" class="inline-flex gap-2">
+                                        <input type="hidden" name="user_id" value="{{ student[0] }}">
+                                        
+                                        <button name="action" value="approve" class="w-8 h-8 rounded-lg flex items-center justify-center border border-emerald-500/30 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all" title="Approve">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button name="action" value="reject" class="w-8 h-8 rounded-lg flex items-center justify-center border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white transition-all" title="Reject">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-8 text-center border-dashed border-gray-800">
+                    <p class="text-gray-500 text-xs">No pending registration requests.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- 2. APPROVED CLASS LIST (NEW SECTION) -->
+            <div class="glass-card rounded-2xl fade-in delay-200 overflow-hidden">
+                <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                    <h3 class="font-bold text-white text-sm uppercase tracking-widest flex items-center gap-2">
+                        <i class="fas fa-users text-gray-500"></i> Enrolled Students
+                    </h3>
+                    {% if my_students %}
+                    <span class="px-2 py-1 rounded bg-emerald-500/10 text-emerald-500 text-[10px] font-bold border border-emerald-500/20">
+                        {{ my_students|length }} Active
+                    </span>
+                    {% endif %}
+                </div>
+
+                {% if my_students %}
+                <div class="overflow-x-auto max-h-[300px] overflow-y-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-black/40 text-[10px] uppercase text-gray-500 font-bold tracking-wider sticky top-0 backdrop-blur-md">
+                            <tr>
+                                <th class="px-6 py-4">Full Name</th>
+                                <th class="px-6 py-4">PRN</th>
+                                <th class="px-6 py-4">Mobile</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5">
+                            {% for student in my_students %}
+                            <tr class="group hover:bg-white/[0.02] transition-colors">
+                                <td class="px-6 py-3">
+                                    <span class="text-sm font-medium text-white">{{ student[0] }}</span>
+                                </td>
+                                <td class="px-6 py-3 text-sm text-gray-400 font-mono">{{ student[1] }}</td>
+                                <td class="px-6 py-3 text-sm text-gray-400 font-mono">{{ student[2] if student[2] else '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-12 text-center">
+                    <i class="fas fa-user-slash text-4xl text-gray-800 mb-4"></i>
+                    <p class="text-gray-500 text-sm">No students assigned to your class yet.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- 3. ACTIVE FORMS ANALYTICS -->
+            <div class="fade-in delay-300">
+                <h3 class="font-bold text-white text-sm uppercase tracking-widest mb-5 flex items-center gap-2">
+                    <i class="fas fa-chart-pie text-gray-500"></i> Active Analytics
+                </h3>
+
+                {% if forms %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {% for form in forms %}
+                    <a href="{{ url_for('view_analytics', form_id=form[0]) }}" class="group block">
+                        <div class="glass-card p-6 rounded-2xl h-full relative overflow-hidden group-hover:-translate-y-1 transition-transform duration-300">
+                            <!-- Glow Effect -->
+                            <div class="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+                            <div class="flex justify-between items-start mb-4 relative z-10">
+                                <span class="px-2 py-1 rounded bg-white/5 border border-white/5 text-[10px] font-mono text-gray-400">
+                                    {{ form[2] }}
+                                </span>
+                                <i class="fas fa-arrow-right text-gray-600 group-hover:text-primary transition-colors -rotate-45 group-hover:rotate-0 transform duration-300"></i>
+                            </div>
+
+                            <h4 class="text-lg font-bold text-white mb-6 group-hover:text-primary transition-colors line-clamp-2">
+                                {{ form[1] }}
+                            </h4>
+
+                            <div class="flex items-end justify-between relative z-10 pt-4 border-t border-white/5">
+                                <div>
+                                    <p class="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Total Responses</p>
+                                    <p class="text-2xl font-bold text-white">{{ form[3] }}</p>
+                                </div>
+                                <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-primary border border-white/5">
+                                    <i class="fas fa-chart-bar text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="glass-card rounded-2xl p-12 text-center border-dashed border-gray-800">
+                    <div class="w-16 h-16 bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-plus text-gray-600"></i>
+                    </div>
+                    <p class="text-gray-400 font-medium mb-2">No feedback topics yet</p>
+                    <p class="text-gray-600 text-xs max-w-xs mx-auto">Create a topic using the panel on the left to start collecting student sentiment data.</p>
+                </div>
+                {% endif %}
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto py-8 text-center text-[10px] text-gray-600 uppercase tracking-widest border-t border-white/5 bg-black">
+        <p>&copy; 2026 Silent Intelligence Systems</p>
+    </footer>
+
+</body>
+</html>

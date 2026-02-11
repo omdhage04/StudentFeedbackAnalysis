@@ -1,0 +1,22 @@
+StudentFeedbackAnalysis/
+│
+├── app.py
+│
+├── modules/
+│   ├── __init__.py
+│   ├── student.py
+│   ├── teacher.py
+│   └── admin.py
+│
+├── student_feedback_bert/
+│   ├── config.json
+│   ├── pytorch_model.bin
+│   ├── tokenizer.json
+│   ├── vocab.txt
+│   └── tokenizer_config.json
+│
+├── data/
+│   └── feedback.csv
+│
+├── requirements.txt
+└── .env

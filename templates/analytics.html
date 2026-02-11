@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligence Report | AIfeedBacker</title>
+    
+    <!-- Tailwind & Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- PDF Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Inter Tight"', 'sans-serif'] },
+                    colors: {
+                        obsidian: "#000000",
+                        charcoal: "#0a0a0a",
+                        borderSubtle: "rgba(255, 255, 255, 0.08)",
+                        primary: "#6366f1",
+                        accent: "#a855f7",
+                        glow: "#d946ef",
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #000000; color: #ffffff; }
+        
+        /* Grid Overlay */
+        .grid-bg {
+            background-size: 60px 60px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
+            position: fixed; inset: 0; pointer-events: none; z-index: 0;
+        }
+
+        /* Animated Diamond Logo */
+        .logo-box {
+            position: relative; width: 28px; height: 28px; background: #000;
+            border: 1px solid rgba(255,255,255,0.2); transform: rotate(45deg);
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        .logo-box::before {
+            content: ''; position: absolute; width: 200%; height: 200%;
+            background: conic-gradient(transparent, #a855f7, transparent);
+            animation: spin 4s linear infinite;
+        }
+        .logo-inner { width: 22px; height: 22px; background: #000; position: relative; z-index: 10; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Glassmorphism */
+        .glass-card {
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1.25rem;
+        }
+
+        .text-premium {
+            background: linear-gradient(to right, #fff 20%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Table custom scroll */
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.3); border-radius: 10px; }
+
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body class="antialiased selection:bg-accent selection:text-white">
+
+    <div class="grid-bg"></div>
+
+    <!-- NAVBAR -->
+    <nav class="fixed w-full z-50 top-0 border-b border-white/5 bg-black/80 backdrop-blur-md no-print">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="logo-box"><div class="logo-inner"></div></div>
+                <span class="text-lg font-bold tracking-tight text-white italic">AIfeedBacker <span class="text-[10px] font-light text-gray-500 ml-2 uppercase tracking-widest">Intelligence Core</span></span>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button onclick="history.back()" class="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i> Back
+                </button>
+                <div class="h-4 w-px bg-white/10 mx-2"></div>
+                <button id="downloadBtn" class="px-5 py-2 rounded-full bg-white text-black text-[10px] font-extrabold uppercase tracking-widest hover:bg-accent hover:text-white transition-all transform hover:scale-105 active:scale-95 shadow-xl">
+                    <i class="fas fa-file-pdf mr-2"></i> Download Report
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- CONTENT -->
+    <main id="reportContent" class="relative z-10 pt-28 pb-20 px-6 max-w-7xl mx-auto">
+        
+        <!-- HEADER STATS -->
+        <header class="mb-12">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h1 class="text-4xl font-bold tracking-tighter mb-2">{{ title }}</h1>
+                    <p class="text-gray-500 font-light text-sm">Synthetic sentiment analysis and student response metrics.</p>
+                </div>
+                <div class="no-print">
+                    <form action="/analytics/{{ form_id }}/regenerate" method="POST">
+                        <button type="submit" class="text-[10px] font-bold uppercase tracking-widest text-accent hover:text-glow transition-colors">
+                            <i class="fas fa-sync-alt mr-2"></i> Force AI Refresh
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {% set ns = namespace(pos=0, neu=0, neg=0) %}
+            {% for _, sentiment in responses %}
+                {% if sentiment == 'Positive' %} {% set ns.pos = ns.pos + 1 %}
+                {% elif sentiment == 'Neutral' %} {% set ns.neu = ns.neu + 1 %}
+                {% elif sentiment == 'Negative' %} {% set ns.neg = ns.neg + 1 %}
+                {% endif %}
+            {% endfor %}
+            {% set total = ns.pos + ns.neu + ns.neg %}
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="glass-card p-6 border-l-4 border-primary">
+                    <p class="text-[9px] uppercase tracking-widest text-gray-500 mb-1">Total Signals</p>
+                    <h3 class="text-3xl font-bold">{{ total }}</h3>
+                </div>
+                <div class="glass-card p-6 border-l-4 border-green-500">
+                    <p class="text-[9px] uppercase tracking-widest text-gray-500 mb-1">Positive Bias</p>
+                    <h3 class="text-3xl font-bold text-green-400">{{ ns.pos }}</h3>
+                </div>
+                <div class="glass-card p-6 border-l-4 border-zinc-600">
+                    <p class="text-[9px] uppercase tracking-widest text-gray-500 mb-1">Neutral Ground</p>
+                    <h3 class="text-3xl font-bold text-gray-400">{{ ns.neu }}</h3>
+                </div>
+                <div class="glass-card p-6 border-l-4 border-fuchsia-600">
+                    <p class="text-[9px] uppercase tracking-widest text-gray-500 mb-1">Negative Friction</p>
+                    <h3 class="text-3xl font-bold text-fuchsia-400">{{ ns.neg }}</h3>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- LEFT: AI SUMMARY & TABLE -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- MASTER AI SUMMARY CARD -->
+                <div class="glass-card p-8 bg-gradient-to-br from-charcoal to-black relative overflow-hidden border-glow/20">
+                    <!-- Glow Effects -->
+                    <div class="absolute -right-20 -top-20 w-64 h-64 bg-accent opacity-10 blur-[120px]"></div>
+                    <div class="absolute -left-20 -bottom-20 w-64 h-64 bg-glow opacity-5 blur-[120px]"></div>
+
+                    <div class="flex items-center gap-3 mb-6 relative z-10">
+                        <div class="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center border border-accent/20">
+                            <i class="fas fa-brain text-accent animate-pulse"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold uppercase tracking-[0.2em] text-premium">Intelligence Narrative</h3>
+                            <p class="text-[9px] text-gray-500 uppercase tracking-widest">Model: Qwen-2.5-1.5B Instruct</p>
+                        </div>
+                    </div>
+                    
+                    <div class="relative z-10">
+                        <p class="text-gray-300 leading-relaxed text-lg font-light italic">
+                            "{{ ai_summary }}"
+                        </p>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-white/5 flex gap-10 relative z-10">
+                        <div>
+                            <p class="text-[9px] text-gray-500 uppercase tracking-widest mb-1">Processing Mode</p>
+                            <p class="text-[10px] font-bold text-accent font-mono">HIERARCHICAL_SUMM</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] text-gray-500 uppercase tracking-widest mb-1">Signal Integrity</p>
+                            <p class="text-[10px] font-bold text-green-500 uppercase">Verified Anonymity</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FEEDBACK TABLE -->
+                <div class="glass-card overflow-hidden">
+                    <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                        <h3 class="text-[11px] font-bold uppercase tracking-widest text-gray-400">Response Stream</h3>
+                        <span class="text-[9px] px-2 py-1 rounded bg-white/5 text-gray-500 border border-white/10">{{ responses|length }} SIGNALS</span>
+                    </div>
+                    <div class="max-h-[500px] overflow-y-auto custom-scroll">
+                        <table class="w-full text-left">
+                            <thead class="text-[9px] uppercase text-gray-500 border-b border-white/5 sticky top-0 bg-charcoal z-20">
+                                <tr>
+                                    <th class="px-8 py-4 font-semibold">Narrative Extract</th>
+                                    <th class="px-8 py-4 font-semibold w-32">Classification</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-white/5">
+                                {% for feedback, sentiment in responses %}
+                                <tr class="hover:bg-white/[0.02] transition-colors group">
+                                    <td class="px-8 py-5 text-sm text-gray-400 group-hover:text-gray-200 leading-relaxed font-light">{{ feedback }}</td>
+                                    <td class="px-8 py-5">
+                                        <span class="text-[9px] font-bold uppercase px-3 py-1 rounded-full border
+                                            {% if sentiment == 'Positive' %} bg-green-500/10 text-green-400 border-green-500/20 
+                                            {% elif sentiment == 'Negative' %} bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20 
+                                            {% else %} bg-zinc-500/10 text-gray-400 border-zinc-500/20 {% endif %}">
+                                            {{ sentiment }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="2" class="px-8 py-20 text-center text-gray-600 text-xs uppercase tracking-widest italic">Signal Pipeline Empty</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: CHART & LEGEND -->
+            <div class="space-y-8">
+                <div class="glass-card p-8 sticky top-24">
+                    <h3 class="text-[11px] font-bold uppercase tracking-[0.2em] text-center mb-10 text-gray-400">Sentiment Distribution</h3>
+                    <div class="relative mb-10">
+                        <canvas id="sentimentChart"></canvas>
+                    </div>
+                    
+                    <div class="space-y-5">
+                        <div class="flex justify-between items-center text-[11px] uppercase tracking-widest">
+                            <span class="flex items-center gap-3"><div class="w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div> Positive</span>
+                            <span class="font-mono text-gray-400">{{ ((ns.pos / total * 100)|round(1)) if total > 0 else 0 }}%</span>
+                        </div>
+                        <div class="flex justify-between items-center text-[11px] uppercase tracking-widest">
+                            <span class="flex items-center gap-3"><div class="w-2.5 h-2.5 rounded-full bg-zinc-600"></div> Neutral</span>
+                            <span class="font-mono text-gray-400">{{ ((ns.neu / total * 100)|round(1)) if total > 0 else 0 }}%</span>
+                        </div>
+                        <div class="flex justify-between items-center text-[11px] uppercase tracking-widest">
+                            <span class="flex items-center gap-3"><div class="w-2.5 h-2.5 rounded-full bg-fuchsia-500 shadow-[0_0_10px_rgba(217,70,239,0.5)]"></div> Negative</span>
+                            <span class="font-mono text-gray-400">{{ ((ns.neg / total * 100)|round(1)) if total > 0 else 0 }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="mt-20 border-t border-white/5 py-12 text-center no-print">
+        <p class="text-[9px] text-gray-600 uppercase tracking-[0.4em]">
+            Processed by Silent Intelligence Engine v2.5.0_Qwen
+        </p>
+    </footer>
+
+    <script>
+        // Chart Data Initialization
+        const posCount = {{ ns.pos }};
+        const neuCount = {{ ns.neu }};
+        const negCount = {{ ns.neg }};
+
+        const ctx = document.getElementById('sentimentChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Positive', 'Neutral', 'Negative'],
+                datasets: [{
+                    data: [posCount, neuCount, negCount],
+                    backgroundColor: ['#6366f1', '#3f3f46', '#d946ef'],
+                    hoverBackgroundColor: ['#818cf8', '#52525b', '#e879f9'],
+                    borderWidth: 0,
+                    hoverOffset: 15
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: '82%',
+                plugins: { legend: { display: false } },
+                animation: { animateScale: true, animateRotate: true }
+            }
+        });
+
+        // High-Quality PDF Export Logic
+        document.getElementById('downloadBtn').addEventListener('click', async () => {
+            const { jsPDF } = window.jspdf;
+            const btn = document.getElementById('downloadBtn');
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+            btn.disabled = true;
+            
+            const element = document.getElementById('reportContent');
+            
+            try {
+                const canvas = await html2canvas(element, {
+                    backgroundColor: '#000000',
+                    scale: 2,
+                    logging: false,
+                    useCORS: true,
+                    windowWidth: 1400
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                
+                const imgProps = pdf.getImageProperties(imgData);
+                const ratio = imgProps.height / imgProps.width;
+                const canvasHeight = pdfWidth * ratio;
+                
+                // Header in PDF
+                pdf.setFillColor(10, 10, 10);
+                pdf.rect(0, 0, 210, 15, 'F');
+                pdf.setTextColor(255, 255, 255);
+                pdf.setFontSize(8);
+                pdf.text("AIFEEDBACKER INTELLIGENCE REPORT", 10, 10);
+                
+                pdf.addImage(imgData, 'PNG', 0, 15, pdfWidth, canvasHeight);
+                pdf.save(`Report_${new Date().getTime()}.pdf`);
+            } catch (err) {
+                console.error("PDF Export Failed:", err);
+                alert("Export error. Please check console.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

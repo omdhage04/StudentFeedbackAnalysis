@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIfeedBacker | Silent Intelligence</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts: Inter Tight (Premium, High readability) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Inter Tight"', 'sans-serif'] },
+                    colors: {
+                        obsidian: "#000000", /* True Black */
+                        charcoal: "#0a0a0a", /* Slightly lighter black for cards */
+                        borderSubtle: "rgba(255, 255, 255, 0.08)",
+                        primary: "#6366f1",  /* Indigo */
+                        accent: "#a855f7",   /* Purple */
+                        glow: "#d946ef",     /* Fuchsia */
+                    },
+                    backgroundImage: {
+                        'premium-gradient': 'linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #d946ef 100%)',
+                        'subtle-glow': 'conic-gradient(from 180deg at 50% 50%, #0a0a0a 0deg, #1a1a1a 360deg)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        /* Lenis Smooth Scroll Setup */
+        html.lenis { height: auto; }
+        .lenis.lenis-smooth { scroll-behavior: auto; }
+        .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+        .lenis.lenis-stopped { overflow: hidden; }
+
+        /* Typography & Gradients */
+        .text-premium {
+            background: linear-gradient(to right, #fff 20%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .btn-premium {
+            background: white;
+            color: black;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .btn-premium:hover {
+            background: #d946ef;
+            color: white;
+            box-shadow: 0 0 30px rgba(217, 70, 239, 0.4);
+            transform: scale(1.02);
+        }
+
+        /* Mesh Background (Very Subtle) */
+        .grid-bg {
+            background-size: 60px 60px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
+            -webkit-mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
+        }
+
+        /* Custom Logo CSS */
+        .logo-box {
+            position: relative;
+            width: 32px;
+            height: 32px;
+            background: #000;
+            border: 1px solid rgba(255,255,255,0.2);
+            transform: rotate(45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .logo-box::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent, #a855f7, transparent);
+            animation: spin 4s linear infinite;
+        }
+        .logo-inner {
+            width: 26px;
+            height: 26px;
+            background: #000;
+            position: relative;
+            z-index: 10;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Card Styles */
+        .glass-card {
+            background: #0a0a0a;
+            border: 1px solid var(--borderSubtle);
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.8);
+        }
+        .glass-card:hover {
+            border-color: rgba(168, 85, 247, 0.3);
+            box-shadow: 0 0 40px rgba(168, 85, 247, 0.1);
+        }
+
+        /* Animations */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 1s cubic-bezier(0.2, 0.8, 0.2, 1), transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .fade-up.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body class="antialiased selection:bg-accent selection:text-white">
+
+    <!-- Grid Overlay -->
+    <div class="fixed inset-0 grid-bg pointer-events-none z-0"></div>
+
+    <!-- NAVBAR -->
+    <nav class="fixed w-full z-50 top-0 transition-all duration-300 border-b border-white/5 bg-black/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="logo-box">
+                    <div class="logo-inner"></div>
+                </div>
+                <span class="text-xl font-bold tracking-tight text-white">AIfeedBacker</span>
+            </div>
+
+            <!-- Navigation -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#how-it-works" class="text-xs font-medium uppercase tracking-widest text-gray-500 hover:text-white transition-colors">Process</a>
+                <a href="#tech" class="text-xs font-medium uppercase tracking-widest text-gray-500 hover:text-white transition-colors">Intelligence</a>
+                
+                <div class="flex items-center gap-6 pl-6 border-l border-white/10">
+                    <a href="/login" class="text-sm font-semibold hover:text-accent transition-colors">Log In</a>
+                    <a href="/signup" class="px-6 py-2.5 rounded-full btn-premium text-sm font-bold inline-flex items-center justify-center">
+                        Get Started
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="relative z-10 pt-48 pb-32 flex flex-col items-center text-center px-4 max-w-5xl mx-auto">
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-primary opacity-10 blur-[150px] rounded-full pointer-events-none"></div>
+
+        <div class="fade-up visible relative z-20">
+            <h1 class="text-6xl md:text-8xl font-semibold leading-tight mb-8 tracking-tighter">
+                Feedback is <br>
+                <span class="text-premium">Better When Silent.</span>
+            </h1>
+            <p class="text-xl text-gray-500 max-w-2xl mx-auto mb-12 font-light leading-relaxed">
+                The anonymous bridge between students and faculty. 
+                Powered by BERT & Qwen AI to turn raw text into actionable administrative intelligence.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                <a href="/signup" class="px-10 py-4 rounded-full bg-white text-black font-bold text-lg hover:bg-gray-200 transition-all transform hover:-translate-y-1 inline-block">
+                    Join the Network
+                </a>
+                <button onclick="document.getElementById('how-it-works').scrollIntoView({behavior: 'smooth'})" class="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+                    <span class="text-sm font-medium">How it works</span>
+                    <i class="fas fa-arrow-right text-xs transform group-hover:translate-x-1 transition-transform"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how-it-works" class="py-32 relative z-10 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-20 fade-up">
+                <div>
+                    <h2 class="text-4xl font-semibold mb-2">The Invisible Pipeline</h2>
+                    <p class="text-gray-500">Zero-knowledge identity protection architecture.</p>
+                </div>
+                <div class="hidden md:block h-px w-1/3 bg-gradient-to-r from-white/10 to-transparent"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative fade-up">
+                <div class="glass-card p-8 rounded-xl relative group">
+                    <div class="absolute top-8 right-8 text-6xl font-bold text-white/5 group-hover:text-accent/10 transition-colors">01</div>
+                    <div class="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-xl mb-6 text-white border border-white/10">
+                        <i class="fas fa-pen-nib"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Submit</h3>
+                    <p class="text-sm text-gray-500 leading-relaxed">Login securely. Select your class. Write your honest feedback. Your session ID is encrypted, not your name.</p>
+                </div>
+
+                <div class="glass-card p-8 rounded-xl relative group">
+                    <div class="absolute top-8 right-8 text-6xl font-bold text-white/5 group-hover:text-accent/10 transition-colors">02</div>
+                    <div class="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-xl mb-6 text-accent border border-white/10">
+                        <i class="fas fa-fingerprint"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Anonymize</h3>
+                    <p class="text-sm text-gray-500 leading-relaxed">Our middleware strips all PII (Personal Identifiable Information) before the data even touches the analysis server.</p>
+                </div>
+
+                <div class="glass-card p-8 rounded-xl relative group">
+                    <div class="absolute top-8 right-8 text-6xl font-bold text-white/5 group-hover:text-accent/10 transition-colors">03</div>
+                    <div class="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-xl mb-6 text-white border border-white/10">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Analyze</h3>
+                    <p class="text-sm text-gray-500 leading-relaxed">AI Models process the sentiment and generate a summarized report for the HOD. No names, just data.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TECH SPECS -->
+    <section id="tech" class="py-32 relative z-10 border-t border-white/5 bg-[#030303]">
+        <div class="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
+            <div class="fade-up">
+                <h2 class="text-4xl font-semibold mb-8">Powered by <br> <span class="text-premium">Dual-Core Intelligence</span></h2>
+                
+                <div class="space-y-8">
+                    <div class="flex gap-6 group">
+                        <div class="w-12 h-12 rounded bg-indigo-900/20 flex items-center justify-center text-indigo-400 font-bold border border-indigo-500/20 group-hover:border-indigo-500 transition-colors">B</div>
+                        <div>
+                            <h4 class="text-lg font-bold text-white mb-1">BERT Model</h4>
+                            <p class="text-sm text-gray-500 leading-relaxed">Bidirectional Encoder Representations from Transformers. Fine-tuned for academic context to detect sentiment with 96% accuracy.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-6 group">
+                        <div class="w-12 h-12 rounded bg-fuchsia-900/20 flex items-center justify-center text-fuchsia-400 font-bold border border-fuchsia-500/20 group-hover:border-fuchsia-500 transition-colors">Q</div>
+                        <div>
+                            <h4 class="text-lg font-bold text-white mb-1">Qwen Model</h4>
+                            <p class="text-sm text-gray-500 leading-relaxed">Large Language Model (LLM) capable of reading thousands of entries and summarizing them into a single actionable paragraph.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="relative fade-up delay-100">
+                <div class="absolute inset-0 bg-gradient-to-tr from-indigo-500 to-fuchsia-500 opacity-10 blur-[100px] rounded-full"></div>
+                
+                <div class="relative bg-black border border-white/10 rounded-xl p-6 shadow-2xl">
+                    <div class="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
+                        <div class="w-2.5 h-2.5 rounded-full bg-zinc-700"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-zinc-700"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-zinc-700"></div>
+                        <span class="text-[10px] text-gray-600 ml-auto font-mono uppercase">processing_core.py</span>
+                    </div>
+                    <div class="space-y-2 font-mono text-xs">
+                        <div class="flex justify-between items-center p-2 bg-white/5 rounded border border-white/5">
+                            <span class="text-gray-400">Input: "Lectures are good but too fast."</span>
+                            <span class="text-yellow-500">NEUTRAL (0.65)</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 bg-white/5 rounded border border-white/5">
+                            <span class="text-gray-400">Input: "Lab computers are broken."</span>
+                            <span class="text-red-500">NEGATIVE (0.92)</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 bg-white/5 rounded border border-white/5">
+                            <span class="text-gray-400">Input: "HOD is very supportive."</span>
+                            <span class="text-green-500">POSITIVE (0.98)</span>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-white/5 text-gray-500">
+                            > Generating Summary... <span class="animate-pulse">_</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-black border-t border-white/10 pt-20 pb-10 relative z-10">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-20">
+                <div>
+                    <span class="text-2xl font-bold text-white block mb-6">AIfeedBacker</span>
+                    <p class="text-gray-500 text-sm leading-relaxed max-w-sm">
+                        Bridging the gap between students and faculty through technology. 
+                        Honest feedback, intelligent analysis, real improvement.
+                    </p>
+                </div>
+                <div class="flex gap-16 md:justify-end">
+                    <div>
+                        <h4 class="text-white font-bold uppercase tracking-widest text-[10px] mb-6">Platform</h4>
+                        <ul class="space-y-4 text-sm text-gray-500">
+                            <li><a href="/login" class="hover:text-white transition-colors">Student Login</a></li>
+                            <li><a href="/login" class="hover:text-white transition-colors">Faculty Login</a></li>
+                            <li><a href="/login" class="hover:text-white transition-colors">Admin Portal</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-bold uppercase tracking-widest text-[10px] mb-6">About</h4>
+                        <ul class="space-y-4 text-sm text-gray-500">
+                            <li><a href="#" class="hover:text-white transition-colors">Privacy</a></li>
+                            <li><a href="#" class="hover:text-white transition-colors">Terms</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-600">
+                <p>&copy; 2026 AIfeedBacker. All rights reserved.</p>
+                <p class="font-medium tracking-wide">
+                    DEVELOPED BY <span class="text-white">OM DHAGE</span>, <span class="text-white">ADITYA TATHE</span> & <span class="text-white">PRAJWAL SASTE</span>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
+    <script>
+        // Lenis Scroll - Updated for Faster/Snappier Speed
+        const lenis = new Lenis({ 
+            duration: 0.8, // Reduced from 1.2 to 0.8 for faster transition
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
+            smooth: true,
+            wheelMultiplier: 1.5, // Added to make scroll wheel more responsive
+            touchMultiplier: 2 // Faster scrolling on mobile devices
+        });
+
+        function raf(time) { 
+            lenis.raf(time); 
+            requestAnimationFrame(raf); 
+        }
+        requestAnimationFrame(raf);
+
+        // Scroll Animation Observer
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => { 
+                if (entry.isIntersecting) entry.target.classList.add('visible'); 
+            });
+        }, { threshold: 0.1 });
+        
+        document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>

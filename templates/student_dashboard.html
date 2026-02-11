@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal | AIfeedBacker</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Inter Tight"', 'sans-serif'] },
+                    colors: {
+                        background: "#000000",
+                        accent: "#a855f7",
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { transition: background-color 0.4s ease, color 0.4s ease; margin: 0; font-family: 'Inter Tight', sans-serif; }
+        
+        /* THEME COLORS */
+        .dark body { background-color: #000; color: #fff; }
+        .dark .grid-bg {
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        }
+        .dark .glass-card { background: #0a0a0a; border: 1px solid rgba(255, 255, 255, 0.08); }
+        .dark .input-minimal { border-bottom: 1px solid rgba(255, 255, 255, 0.2); color: white; }
+        .dark .btn-elegant { background-color: white; color: black; }
+        .dark .logo-inner { background: #000; }
+
+        html:not(.dark) body { background-color: #ffffff; color: #000; }
+        html:not(.dark) .grid-bg {
+            background-image: linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+        }
+        html:not(.dark) .glass-card { background: #f9f9f9; border: 1px solid rgba(0, 0, 0, 0.08); }
+        html:not(.dark) .input-minimal { border-bottom: 1px solid rgba(0, 0, 0, 0.2); color: black; }
+        html:not(.dark) .btn-elegant { background-color: black; color: white; }
+        html:not(.dark) .logo-inner { background: #fff; }
+
+        /* Background Grid */
+        .grid-bg {
+            position: fixed; inset: 0; pointer-events: none; z-index: 0;
+            background-size: 60px 60px;
+            mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+            -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+            opacity: 0.6;
+        }
+
+        /* Animated Diamond Logo */
+        .logo-box {
+            position: relative; width: 32px; height: 32px;
+            background: transparent; border: 1px solid rgba(128,128,128,0.3);
+            transform: rotate(45deg); display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+        .logo-box::before {
+            content: ''; position: absolute; width: 200%; height: 200%;
+            background: conic-gradient(transparent, #a855f7, transparent);
+            animation: spin-logo 4s linear infinite;
+        }
+        .logo-inner { width: 26px; height: 26px; position: relative; z-index: 10; transition: background 0.4s; }
+        @keyframes spin-logo { 100% { transform: rotate(360deg); } }
+
+        /* Progress Ring */
+        .progress-ring svg { transform: rotate(-90deg); }
+        .val-ring {
+            stroke: #a855f7;
+            stroke-dasharray: 126;
+            stroke-dashoffset: calc(126 - (126 * {{ progress }}) / 100);
+            transition: stroke-dashoffset 1s ease;
+            stroke-linecap: round;
+        }
+
+        /* Inputs & Buttons */
+        .input-minimal {
+            background: transparent; border: none; border-radius: 0;
+            padding: 12px 0; transition: all 0.3s ease; width: 100%; outline: none;
+        }
+        .input-minimal:focus { border-bottom-color: #a855f7; }
+        .btn-elegant { 
+            font-weight: 700; transition: all 0.3s ease; letter-spacing: 0.1em;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-elegant:hover { transform: translateY(-2px); opacity: 0.9; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+
+        /* Locked State */
+        .locked-overlay {
+            position: absolute; inset: 0; z-index: 20;
+            backdrop-filter: blur(10px); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; border-radius: 1.5rem;
+        }
+        .dark .locked-overlay { background: rgba(0,0,0,0.7); }
+        html:not(.dark) .locked-overlay { background: rgba(255,255,255,0.7); }
+    </style>
+</head>
+<body class="antialiased min-h-screen relative overflow-x-hidden">
+
+    <div class="grid-bg"></div>
+
+    <!-- NAVBAR -->
+    <nav class="fixed w-full z-50 top-0 h-24 flex items-center justify-between px-6 md:px-12 pointer-events-none">
+        <!-- Logo & Profile Combo -->
+        <div class="flex items-center gap-4 pointer-events-auto">
+            <div class="logo-box"><div class="logo-inner"></div></div>
+            
+            <button id="theme-toggle" class="w-8 h-8 rounded-full border border-gray-500/20 flex items-center justify-center hover:bg-gray-500/10 transition-colors">
+                <i class="fas fa-moon text-[10px] hidden dark:block text-white"></i>
+                <i class="fas fa-sun text-[10px] block dark:hidden text-black"></i>
+            </button>
+
+            <div class="h-10 w-px bg-gray-500/20 mx-2 hidden md:block"></div>
+
+            <!-- Profile Pill -->
+            <div class="hidden md:flex items-center gap-3 bg-white/5 dark:bg-white/5 backdrop-blur-md border border-gray-500/10 px-4 py-1.5 rounded-full">
+                <div class="relative w-8 h-8 flex items-center justify-center">
+                    <svg class="absolute inset-0 w-full h-full">
+                        <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2" fill="none" class="text-gray-500/20" />
+                        <circle cx="16" cy="16" r="14" stroke="#a855f7" stroke-width="2" fill="none" 
+                                style="stroke-dasharray: 88; stroke-dashoffset: calc(88 - (88 * {{ progress }}) / 100);" stroke-linecap="round" />
+                    </svg>
+                    <span class="text-[9px] font-bold">{{ progress }}%</span>
+                </div>
+                <div class="text-left">
+                    <p class="text-[10px] font-bold leading-none uppercase tracking-tighter">{{ student.name }}</p>
+                    <p class="text-[8px] text-gray-500 uppercase">{{ student.prn }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logout -->
+        <div class="pointer-events-auto">
+            <a href="{{ url_for('logout') }}" class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 hover:text-red-500 transition-colors">
+                Terminate Session <i class="fas fa-power-off ml-2"></i>
+            </a>
+        </div>
+    </nav>
+
+    <main class="relative z-10 max-w-5xl mx-auto pt-32 pb-20 px-6">
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="mb-8 p-4 rounded-xl text-xs font-bold uppercase tracking-widest text-center 
+                {% if category == 'success' %} bg-green-500/10 text-green-500 border border-green-500/20 
+                {% else %} bg-red-500/10 text-red-500 border border-red-500/20 {% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <div class="text-center mb-16">
+            <h1 class="text-5xl md:text-6xl font-extrabold tracking-tighter mb-4">Student <span class="text-[#a855f7]">Terminal.</span></h1>
+            <p class="text-gray-500 uppercase text-[10px] tracking-[0.4em]">AI-Powered Intelligence Bridge</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-12">
+
+            <!-- PROFILE COMPLETION -->
+            {% if progress < 100 %}
+            <div class="glass-card p-8 md:p-12 rounded-[2rem] relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-8 opacity-10">
+                    <i class="fas fa-user-shield text-8xl"></i>
+                </div>
+                
+                <h2 class="text-2xl font-bold mb-2">Complete Protocol</h2>
+                <p class="text-gray-500 text-xs uppercase tracking-widest mb-10">Verification required to unlock feedback modules</p>
+                
+                <form method="POST" class="space-y-8">
+                    <input type="hidden" name="action" value="update_profile">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                        <div>
+                            <label class="text-[10px] uppercase tracking-widest text-gray-500 block mb-1">Mobile Contact</label>
+                            <input type="number" name="mobile" value="{{ student.mobile or '' }}" placeholder="+91 XXXX" class="input-minimal" required>
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase tracking-widest text-gray-500 block mb-1">Class / Division</label>
+                            <input type="text" name="class" value="{{ student.class or '' }}" placeholder="e.g. TY B.Tech B" class="input-minimal" required>
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase tracking-widest text-gray-500 block mb-1">Department</label>
+                            <input type="text" name="dept" value="{{ student.dept or '' }}" placeholder="Information Technology" class="input-minimal" required>
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase tracking-widest text-gray-500 block mb-1">Academic Year</label>
+                            <input type="text" name="year" value="{{ student.year or '' }}" placeholder="2024-25" class="input-minimal" required>
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase tracking-widest text-gray-500 block mb-1">Class Teacher</label>
+                            <input type="text" name="teacher" value="{{ student.teacher or '' }}" class="input-minimal" required>
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase tracking-widest text-gray-500 block mb-1">Head of Department</label>
+                            <input type="text" name="hod" value="{{ student.hod or '' }}" class="input-minimal" required>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-elegant w-full md:w-auto px-12 h-14 rounded-full text-xs">
+                        Validate Profile & Unlock
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+            <!-- FEEDBACK FORM -->
+            <div class="glass-card p-8 md:p-12 rounded-[2rem] relative">
+                
+                {% if progress < 100 %}
+                    <div class="locked-overlay text-center">
+                        <div class="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mb-4">
+                            <i class="fas fa-lock text-accent"></i>
+                        </div>
+                        <h3 class="text-xl font-bold">Module Encrypted</h3>
+                        <p class="text-gray-500 text-[10px] uppercase tracking-widest mt-2">Complete 100% profile to gain access</p>
+                    </div>
+                {% endif %}
+
+                <h2 class="text-2xl font-bold mb-2">Submit Feedback</h2>
+                <p class="text-gray-500 text-xs uppercase tracking-widest mb-10">Honest inputs, zero-knowledge anonymity</p>
+
+                {% if forms %}
+                    <form method="POST" class="space-y-10">
+                        <input type="hidden" name="action" value="submit_feedback">
+                        
+                        <div>
+                            <label class="text-[10px] uppercase tracking-widest text-gray-500 block mb-1">Target Subject / Topic</label>
+                            <select name="form_id" required class="input-minimal appearance-none">
+                                <option value="" disabled selected>Select Active Session</option>
+                                {% for form in forms %}
+                                    <option value="{{ form[0] }}">{{ form[1] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] uppercase tracking-widest text-gray-500 block mb-1">Your Narrative</label>
+                            <textarea name="feedback" rows="4" placeholder="Be specific about lectures, labs, or faculty support..." class="input-minimal" required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn-elegant w-full h-16 rounded-full text-xs">
+                            Secure Transmission <i class="fas fa-paper-plane ml-2"></i>
+                        </button>
+                    </form>
+                {% else %}
+                    <div class="py-10 text-center text-gray-500 text-xs uppercase tracking-[0.2em]">
+                        No active feedback protocols detected.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.29/dist/lenis.min.js"></script>
+    <script>
+        // Dark Mode Toggle Logic
+        const toggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        if (localStorage.getItem('theme') === 'light') { html.classList.remove('dark'); }
+        toggleBtn.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        });
+
+        // Fast Lenis Scroll
+        const lenis = new Lenis({ duration: 0.8, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), smooth: true });
+        function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+        requestAnimationFrame(raf);
+    </script>
+</body>
+</html>
