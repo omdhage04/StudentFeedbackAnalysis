@@ -1,7 +1,7 @@
 import torch
 from transformers import (
-    BertForSequenceClassification,
-    BertTokenizer,
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
     Trainer,
     TrainingArguments
 )
@@ -15,16 +15,17 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"🚀 Training on device: {device}")
 
 # ===============================
-# 2️⃣ Model & Tokenizer
+# 2️⃣ Model & Tokenizer (TINY BERT)
 # ===============================
-MODEL_NAME = "bert-base-uncased"
+MODEL_NAME = "prajjwal1/bert-tiny"
 
-tokenizer = BertTokenizer.from_pretrained(MODEL_NAME)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
-model = BertForSequenceClassification.from_pretrained(
+model = AutoModelForSequenceClassification.from_pretrained(
     MODEL_NAME,
-    num_labels=3  # Negative, Neutral, Positive
+    num_labels=3  # 0=Negative, 1=Neutral, 2=Positive
 )
+
 model.to(device)
 
 # ===============================
@@ -32,14 +33,14 @@ model.to(device)
 # ===============================
 training_args = TrainingArguments(
     output_dir="results",
-    num_train_epochs=5,                 # 🔥 REAL TRAINING
-    per_device_train_batch_size=8,
-    per_device_eval_batch_size=16,
-    learning_rate=2e-5,
+    num_train_epochs=6,                 # Slightly more epochs for tiny model
+    per_device_train_batch_size=16,     # Can increase because model is small
+    per_device_eval_batch_size=32,
+    learning_rate=3e-5,                 # Slightly higher LR works well for tiny
     eval_strategy="epoch",
     save_strategy="epoch",
     fp16=torch.cuda.is_available(),
-    gradient_accumulation_steps=2,
+    gradient_accumulation_steps=1,
     load_best_model_at_end=True,
     metric_for_best_model="eval_loss",
     logging_steps=50,
@@ -71,8 +72,8 @@ def compute_metrics(pred):
 trainer = Trainer(
     model=model,
     args=training_args,
-    train_dataset=train_dataset,   # ✅ from studfeedload.py
-    eval_dataset=test_dataset,     # ✅ from studfeedload.py
+    train_dataset=train_dataset,
+    eval_dataset=test_dataset,
     compute_metrics=compute_metrics
 )
 
@@ -84,10 +85,10 @@ trainer.train()
 # ===============================
 # 7️⃣ Save Model
 # ===============================
-SAVE_DIR = "student_feedback_bert"
+SAVE_DIR = "student_feedback_tinybert"
 
 model.save_pretrained(SAVE_DIR)
 tokenizer.save_pretrained(SAVE_DIR)
 
-print("✅ Model training complete")
+print("✅ TinyBERT training complete")
 print(f"✅ Model saved to '{SAVE_DIR}'")
